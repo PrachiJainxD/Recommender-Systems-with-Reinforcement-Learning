@@ -250,6 +250,11 @@ class MDP:
 
         rec_list = []
         # print(self.policy_list)
+        print(user_state)
+
+        if 'policy_list' in self.policy_list:
+            self.policy_list = self.policy_list['policy_list']
+        
         for game_details in self.policy_list[user_state]:
             rec_list.append((self.mdp_i.games[game_details[0]], game_details[1]))
 

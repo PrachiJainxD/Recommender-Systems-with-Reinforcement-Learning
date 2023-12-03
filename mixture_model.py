@@ -34,6 +34,7 @@ class MixtureModel:
         # Generate models whose n-gram values change from 1...k
         for i in range(1, self.k+1):
             # Initialise the MDP
+            print('Creating MDP with k = ', str(i),' and running Policy iteration with max iterations = ', str(max_iteration))
             mm = MDP(path=self.path, alpha=self.alpha, k=i,
                      discount_factor=self.df, verbose=self.verbose, save_path=self.save_path)
             mm.initialise_mdp()

@@ -79,7 +79,7 @@ class MDPInitializer:
             next(csv_f)
             for row in csv_f:
                 actions.append(row[0])
-                games[row[0]] = row[1]
+                games[row[0]] = (row[1], int(row[2]))
                 game_price[row[0]] = int(row[2])
         return actions, games, game_price
 
@@ -165,9 +165,13 @@ class MDPInitializer:
                     transitions[state][action] = {}
                 # Need to alpha * transition[state][action][n_state] as the action corresponds to the desired state
                 transitions[state][action][new_state] = (self.alpha * total_sequence_count / state_count,
-                                                         self.reward(new_state))
+                                                         self.reward(new_state, action))
 
-        # Adding the other possibilities and their probabilities for a particular action
+        # print('Here')
+        # keys = list(transitions.keys())
+        # print(keys[0], transitions[keys[0]])
+
+        # Adding the other possibilities and     their probabilities for a particular action
         for state in transitions:
             for action in transitions[state]:
                 for a in actions:
@@ -181,8 +185,12 @@ class MDPInitializer:
                     if new_state not in transitions[state][action]:
                         transitions[state][action][new_state] = (self.beta(action, new_state)
                                                                  * transitions[state][a][new_state][0],
-                                                                 self.reward(new_state))
+                                                                 self.reward(new_state, a))
 
+        # print('\nHere2')
+        # keys = list(transitions.keys())
+        # print(keys[0], transitions[keys[0]])
+        
         # Normalizing the probabilities
         for state in transitions:
             for action in transitions[state]:
@@ -208,13 +216,24 @@ class MDPInitializer:
                    (self.game_data[new_state[self.k - 1]] / self.game_price[new_state[self.k - 1]]))
         return diff / 120
 
-    def reward(self, state):
+    def reward(self, state, action):
         """
         Method to calculate the reward for each state
         :param state: the state
         :return: the reward for the given state
         """
+        total_price = 0
+        for s in state:
+            if s:
+                total_price += self.game_price[s]
+        if action:
+            total_price += self.game_price[action]
+        return total_price
 
+        # print(state)
+        # print(self.game_price[s])
+        # print(self.game_data)     return ]\]
+        # exit(1)
         # spent = 0
         # for i in range(len(state) - 1):
         #     if state[i] is None:
@@ -230,5 +249,3 @@ class MDPInitializer:
         #     y = 1/y
         #
         # return (1 - y) * (self.game_data[state[self.k - 1]]) + y * (self.game_price[state[self.k - 1]])
-
-        return 1

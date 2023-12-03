@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 #Constants
 PATH='dataset'
-MIXTURE_MODEL_PATH='mixture-models'
+MONTE_CARLO_MODEL_PATH='monte-carlo'
 HEADERS = ['Rank', 'Game', 'Score']
 
 ## Markov Chain Mixture Models with Policy Iteration ##
@@ -17,7 +17,7 @@ HEADERS = ['Rank', 'Game', 'Score']
 # print(tabulate([[ind+1, r[0], r[1]] for ind, r in enumerate(results)], HEADERS, "psql"))
 
 #Training Mixture Model
-mixture_model = MixtureModel(path='dataset', k=8, verbose=True, save_path='saved_models/'+MIXTURE_MODEL_PATH)
+mixture_model = MixtureModel(path='dataset', k=8, verbose=True, save_path='saved_models/'+MONTE_CARLO_MODEL_PATH)
 mixture_model.generate_model(max_iteration=10000)
 #results  = mixture_model.predict(187131847)
 #print(tabulate([[ind+1, r[0], r[1]] for ind, r in enumerate(results)], HEADERS, "psql"))

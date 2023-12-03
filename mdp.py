@@ -5,6 +5,7 @@ from tabulate import tabulate
 import numpy as np
 import math
 import pandas as pd
+import random
 
 from mdp_handler import MDPInitializer
 
@@ -177,6 +178,32 @@ class MDP:
         if to_save:
             self.save("mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
 
+    def calc_reward(self):
+        new_reward = 0
+        for state in self.S:
+            action_values = self.one_step_lookahead(state)
+            new_reward += action_values[self.policy[state]]
+        return new_reward / len(self.S)
+
+    def randomized_algorithm_for_optimal_policies(self, N=5, to_save=True):
+        best_polcicy = None
+        best_policy_performance = 0
+        n_actions = len(self.mdp_i.actions)-1
+        
+        for i in range(N):
+            print('Iteration i - ', i+1)
+            for s in self.S:
+                self.policy[s] = self.mdp_i.actions[random.randint(0, n_actions)]
+            performance = self.calc_reward()
+            self.iteration_vs_reward.append(performance)
+            if performance > best_policy_performance:
+                best_policy_performance = performance
+                best_policy = self.policy.copy()
+        print('Best Policy Performance - ', best_policy_performance)
+        self.policy = best_policy
+        if to_save:
+            self.save("mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
+
     def save(self, filename):
         """
         Method to save the trained model
@@ -336,27 +363,6 @@ class MDP:
 
         return total_score / user_count
 
-    def evaluate_recommendation_score2(self, k=10):
-        """
-        Function to evaluate the given MDP using exponential decay score
-        :param m: a parameter in recommendation score score
-        :return: the average score
-        """
-        return 0
-        # transactions = self.mdp_i.transactions.copy()
-
-        # user_count = 0
-        # total_score = 0
-        # # Generating a testing for each test case
-        # for user in transactions:
-        #     temp = self.mdp_i.transactions[user].copy()
-        #     rec_list = self.recommend(user)
-        #     print(rec_list[0][0])
-        #     total_score += rec_list[0][0][1]
-        #     user_count += 1
-
-        # return total_score / user_count
-    
     def recommend_best_action(self, user_id, π_s):
         """
         Method to provide recommendation to the user
@@ -409,71 +415,70 @@ class MDP:
                 avg_profit_per_user.append(total_profit)
             avg_profit.append(np.average(avg_profit_per_user))
         return np.average(avg_profit)
+
+    # #Monte Carlo Mixture Model
+
+    # def init_v_s(self):
+    #     v_s = {}
+    #     for s in self.S:
+    #         v_s[s] = 0
+    #     return v_s
+
+    # def init_policy(self):
+    #     π_s = {}
+    #     for s in self.S:
+    #         π_s[s] = None
+    #     return  π_s       
+
+    # def get_q_value(self, s, v_s,γ=0.9):
+    #     q_nxt_i = []
+    #     print_stmts = False
+    #     if print_stmts:
+    #         print('Initial State - ', s)
+    #     for action_i, a in enumerate(self.A):
+    #         q_a = 0.0
+    #         if print_stmts:
+    #             print('\n')
+    #         for next_state in self.T[s][a]:               
+    #             p, R_s = self.T[s][a][next_state]
+    #             if next_state in v_s:
+    #                 q_a += p * (R_s + γ*v_s[next_state])
+    #                 if print_stmts:
+    #                     print(a, p, R_s, q_a, v_s[next_state])
+    #         q_nxt_i.append(q_a)
+    #         if print_stmts:
+    #             print(q_nxt_i)
+    #     return q_nxt_i
     
-    
-    #Monte Carlo Mixture Model
+    # def monte_carlo_value_iteration(self,γ=0.9):
+    #     episode = 0
+    #     v_s = self.init_v_s()
+    #     while True:
+    #         v_s_updated = self.init_v_s()
+    #         episode += 1
+    #         Δ = float('-inf')
+    #         for s in self.S:
+    #             v_s_i = v_s[s]
+    #             q_s_a = self.get_q_value(s, v_s)
+    #             v_s_updated[s] = np.max(q_s_a)
+    #             Δ = max(Δ, abs(v_s_updated[s]- v_s_i))
+    #         print('Episode No - ', episode, 'with Δ = ', Δ)
+    #         v_s = v_s_updated.copy()
+    #         # if episode == 1:
+    #         #     return v_s,episode
+    #         π_s = self.get_deterministic_policy(v_s)
+    #         avg_profit = self.calculate_avg_profit(π_s)
+    #         print(avg_profit)
+    #         if Δ < 0.001 and episode > 1:
+    #             return v_s,episode
 
-    def init_v_s(self):
-        v_s = {}
-        for s in self.S:
-            v_s[s] = 0
-        return v_s
-
-    def init_policy(self):
-        π_s = {}
-        for s in self.S:
-            π_s[s] = None
-        return  π_s       
-
-    def get_q_value(self, s, v_s,γ=0.9):
-        q_nxt_i = []
-        print_stmts = False
-        if print_stmts:
-            print('Initial State - ', s)
-        for action_i, a in enumerate(self.A):
-            q_a = 0.0
-            if print_stmts:
-                print('\n')
-            for next_state in self.T[s][a]:               
-                p, R_s = self.T[s][a][next_state]
-                if next_state in v_s:
-                    q_a += p * (R_s + γ*v_s[next_state])
-                    if print_stmts:
-                        print(a, p, R_s, q_a, v_s[next_state])
-            q_nxt_i.append(q_a)
-            if print_stmts:
-                print(q_nxt_i)
-        return q_nxt_i
-    
-    def monte_carlo_value_iteration(self,γ=0.9):
-        episode = 0
-        v_s = self.init_v_s()
-        while True:
-            v_s_updated = self.init_v_s()
-            episode += 1
-            Δ = float('-inf')
-            for s in self.S:
-                v_s_i = v_s[s]
-                q_s_a = self.get_q_value(s, v_s)
-                v_s_updated[s] = np.max(q_s_a)
-                Δ = max(Δ, abs(v_s_updated[s]- v_s_i))
-            print('Episode No - ', episode, 'with Δ = ', Δ)
-            v_s = v_s_updated.copy()
-            # if episode == 1:
-            #     return v_s,episode
-            π_s = self.get_deterministic_policy(v_s)
-            avg_profit = self.calculate_avg_profit(π_s)
-            print(avg_profit)
-            if Δ < 0.001 and episode > 1:
-                return v_s,episode
-
-    def get_deterministic_policy(self, v_s):
-        π_s = self.init_policy()
-        for s in self.S:
-            q_s_a = self.get_q_value(s, v_s)
-            action_idx = np.argmax(q_s_a)
-            π_s[s] = self.A[action_idx]
-        return π_s
+    # def get_deterministic_policy(self, v_s):
+    #     π_s = self.init_policy()
+    #     for s in self.S:
+    #         q_s_a = self.get_q_value(s, v_s)
+    #         action_idx = np.argmax(q_s_a)
+    #         π_s[s] = self.A[action_idx]
+    #     return π_s
 
     
 

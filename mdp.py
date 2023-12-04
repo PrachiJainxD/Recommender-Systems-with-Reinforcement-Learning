@@ -166,6 +166,7 @@ class MDP:
             
             # Improve policy
             new_reward = self.update_policy()
+            new_reward = sum(self.V.values())
             self.iteration_vs_reward.append(new_reward)
 
             if self.no_change_in_policy(policy_prev):
@@ -194,7 +195,9 @@ class MDP:
             print('Iteration i - ', i+1)
             for s in self.S:
                 self.policy[s] = self.mdp_i.actions[random.randint(0, n_actions)]
-            performance = self.calc_reward()
+            self.V = self.policy_eval()
+            performance = sum(self.V.values())
+            #performance = self.calc_reward()
             self.iteration_vs_reward.append(performance)
             if performance > best_policy_performance:
                 best_policy_performance = performance

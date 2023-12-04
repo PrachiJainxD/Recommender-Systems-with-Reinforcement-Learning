@@ -91,7 +91,7 @@ def graph_decay_score(model_load_path, scale=3, rand=False):
     plt.show()
 
 def graph_iteration_vs_reward(model_load_path, k=4, m=10, with_comparison=False):
-    rows = 4
+    rows = k//2
     cols = 2
 
     fig, axs = plt.subplots(rows, cols, figsize=(10, 5*rows))
@@ -113,10 +113,13 @@ def graph_iteration_vs_reward(model_load_path, k=4, m=10, with_comparison=False)
         axs[row_idx, col_idx].legend()
 
     plt.tight_layout()
-    plt.savefig('benchmarks/iteration_vs_reward_subplots_randomized_algo.png')
+    plt.savefig('benchmarks/'+model_load_path+'_iteration_vs_reward.png')
     plt.show()
 
-# graph_recommendation_score('mixture-models', scale=8)
-# graph_decay_score('mixture-models', scale=8, rand=False)
-# graph_iteration_vs_reward('mixture-models', k=8)
-graph_iteration_vs_reward('randomized-algo', k=8)
+
+k_value = 4
+
+graph_recommendation_score('mixture-models', scale=k_value)
+graph_decay_score('mixture-models', scale=k_value, rand=False)
+graph_iteration_vs_reward('mixture-models', k=k_value)
+graph_iteration_vs_reward('randomized-algo', k=k_value)

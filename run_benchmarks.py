@@ -119,7 +119,7 @@ def graph_iteration_vs_reward(model_load_path, k=4, m=10, with_comparison=False)
 
 k_value = 4
 
-graph_recommendation_score('mixture-models', scale=k_value)
-graph_decay_score('mixture-models', scale=k_value, rand=False)
-graph_iteration_vs_reward('mixture-models', k=k_value)
+graph_recommendation_score('monte-carlo', scale=k_value)
+graph_decay_score('monte-carlo', scale=k_value, rand=False)
+graph_iteration_vs_reward('monte-carlo', k=k_value)
 graph_iteration_vs_reward('randomized-algo', k=k_value)

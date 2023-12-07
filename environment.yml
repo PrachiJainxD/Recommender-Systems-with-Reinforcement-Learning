@@ -1,0 +1,19 @@
+# run: conda env create --file environment.yml
+name: rl-project-env
+channels:
+  - conda-forge
+  - anaconda
+dependencies:
+  - python=3.8
+  - ipykernel
+  - jupyter
+  - jupyterlab
+  - ipykernel
+  - notebook
+  - nb_conda_kernels
+  - tabulate
+  - numpy
+  - pickle
+  - operator
+  - matplotlib
+  - seaborn

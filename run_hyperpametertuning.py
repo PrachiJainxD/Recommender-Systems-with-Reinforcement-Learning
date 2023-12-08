@@ -8,7 +8,7 @@ import os, shutil
 
 #Constants
 PATH='dataset'
-MONTE_CARLO_MODEL_PATH='saved_models/monte-carlo'
+VALUE_ITERATION_MODEL_PATH='saved_models/value-iteration'
 RANDOMIZED_MODEL_PATH='saved_models/randomized-algo'
 
 ######### Perform Hyper-Parameter Tuning #################
@@ -40,35 +40,34 @@ def graph_iteration_vs_reward(model, model_load_path, k=4, m=10, with_comparison
         axs[row].set_xlabel('Iteration')
         axs[row].set_ylabel('Reward')
         row += 1
+        np.savez('hyper-parametersgraph/'+model+'_'+k, iteration=x, reward=y)
 
     plt.tight_layout()
     plt.savefig('hyper-parametersgraph/'+model+'_iteration_vs_reward.png')
     plt.show()
     #Remove from Saved_Models
     shutil.rmtree(model_load_path)
-    exit(1)
-
 
 #2D Grid Search
 for alpha in hyper_parameters_grid_search['alpha']:
     for discountrate in hyper_parameters_grid_search['discountrate']:
         for beta_weight in hyper_parameters_grid_search['beta_weight']:
             
-            # #Hyper-Parameter Tuning for Monte Carlo
+            # #Hyper-Parameter Tuning for Value Iteration
             k=max(hyper_parameters_grid_search['k'])
             print(f'Hyperparameters Tuning - α={alpha}, β={beta_weight}, γ={discountrate},k={k}')
             saved_file_suffix = f'_α={alpha},β={beta_weight},γ={discountrate}'
-            mixture_model = MixtureModel(path='dataset', k=k, alpha=alpha, beta_weight=beta_weight,verbose=True, save_path=MONTE_CARLO_MODEL_PATH+saved_file_suffix)
+            mixture_model = MixtureModel(path='dataset', k=k, alpha=alpha, beta_weight=beta_weight,verbose=True, save_path=VALUE_ITERATION_MODEL_PATH+saved_file_suffix)
             mixture_model.generate_model(max_iteration=10000)
-            graph_iteration_vs_reward('monte_carlo_'+saved_file_suffix,MONTE_CARLO_MODEL_PATH+saved_file_suffix, k=k, m=10)
+            graph_iteration_vs_reward('value_iteration_'+saved_file_suffix,VALUE_ITERATION_MODEL_PATH+saved_file_suffix, k=k, m=10)
             
-            #Hyper-Paramter Tuning for Rest of Approaches
-            for k in hyper_parameters_grid_search['k']:
-                print(f'Hyperparameters Tuning - α={alpha}, β={beta_weight}, γ={discountrate},k={k}')
-                saved_file_suffix = f'_α={alpha},β={beta_weight},γ={discountrate}'
-                mm = MDP(PATH, k=k, save_path=RANDOMIZED_MODEL_PATH+saved_file_suffix)
-                mm.initialise_mdp()
-                mm.randomized_algorithm_for_optimal_policies(N=100)
-            graph_iteration_vs_reward('randomized_algo_'+saved_file_suffix,RANDOMIZED_MODEL_PATH+saved_file_suffix, k=k, m=10)
+            # #Hyper-Paramter Tuning for Rest of Approaches
+            # for k in hyper_parameters_grid_search['k']:
+            #     print(f'Hyperparameters Tuning - α={alpha}, β={beta_weight}, γ={discountrate},k={k}')
+            #     saved_file_suffix = f'_α={alpha},β={beta_weight},γ={discountrate}'
+            #     mm = MDP(PATH, k=k, save_path=RANDOMIZED_MODEL_PATH+saved_file_suffix)
+            #     mm.initialise_mdp()
+            #     mm.randomized_algorithm_for_optimal_policies(N=100)
+            # graph_iteration_vs_reward('randomized_algo_'+saved_file_suffix,RANDOMIZED_MODEL_PATH+saved_file_suffix, k=k, m=10)
 
 

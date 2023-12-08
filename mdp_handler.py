@@ -7,7 +7,7 @@ class MDPInitializer:
     Class to generate state space.
     """
 
-    def __init__(self, data_path, k, alpha):
+    def __init__(self, data_path, k, alpha, beta_weight):
         """
         The constructor for the MDPInitializer class.
         Parameters:
@@ -15,12 +15,12 @@ class MDPInitializer:
         :param k: the number of items in each state
         :param alpha: the proportionality constant when considering transitions
         """
-
         self.u_path = data_path + "/users.csv"
         self.t_path = data_path + "/transactions.csv"
         self.g_path = data_path + "/games.csv"
         self.k = k
         self.alpha = alpha
+        self.beta_weight = beta_weight
         self.total_sequences = {}
 
         self.game_data = {}
@@ -183,7 +183,7 @@ class MDPInitializer:
 
                     # Need to beta * transition[state][a][n_state] as the action doesn't correspond to the desired state
                     if new_state not in transitions[state][action]:
-                        transitions[state][action][new_state] = (self.beta(action, new_state)
+                        transitions[state][action][new_state] = (self.beta(action, new_state, self.beta_weight)
                                                                  * transitions[state][a][new_state][0],
                                                                  self.reward(new_state, a))
 
@@ -203,7 +203,7 @@ class MDPInitializer:
 
         return transitions
 
-    def beta(self, action, new_state):
+    def beta(self, action, new_state, beta_weight):
         """
         Method to calculate the beta required
         :param action: the action taken
@@ -214,7 +214,7 @@ class MDPInitializer:
         # The difference in number of hours per unit currency
         diff = abs((self.game_data[action] / self.game_price[action]) -
                    (self.game_data[new_state[self.k - 1]] / self.game_price[new_state[self.k - 1]]))
-        return diff / 120
+        return beta_weight*diff / 120
 
     def reward(self, state, action):
         """

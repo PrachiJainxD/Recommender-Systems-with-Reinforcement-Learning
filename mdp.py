@@ -15,7 +15,7 @@ class MDP:
     Class to run the MDP.
     """
 
-    def __init__(self, path='data', alpha=1, k=3, discount_factor=0.999, verbose=True, save_path="saved_models"):
+    def __init__(self, path='data', alpha=1, beta_weight=1, k=3, discount_factor=0.999, verbose=True, save_path="saved_models"):
         """
         The constructor for the MDP class.
         :param path: path to data
@@ -27,7 +27,7 @@ class MDP:
         """
 
         # Initialize the MDPInitializer
-        self.mdp_i = MDPInitializer(path, k, alpha)
+        self.mdp_i = MDPInitializer(path, k, alpha, beta_weight)
         self.df = discount_factor
         self.verbose = verbose
         self.save_path = save_path
@@ -55,7 +55,7 @@ class MDP:
         The method to initialise the MDP.
         :return: None
         """
-
+        print(f'Initialized MDP with Hyper-Parameters α={self.mdp_i.alpha}, β={self.mdp_i.beta_weight}, γ={self.df},k={self.mdp_i.k}')
         # Initialising the actions
         self.print_progress("Getting set of actions.")
         self.A = self.mdp_i.actions

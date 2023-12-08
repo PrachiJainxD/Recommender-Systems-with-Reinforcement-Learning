@@ -7,7 +7,7 @@ class MixtureModel:
     Class to implement mixture models of multiple MDPs.
     """
 
-    def __init__(self, path='data-mini', alpha=1, k=3, discount_factor=0.999, verbose=True, save_path="mixture-models"):
+    def __init__(self, path='data-mini', alpha=1, k=3, beta_weight=1, discount_factor=0.999, verbose=True, save_path="mixture-models"):
         """
         The constructor for the MixtureModel class.
         :param path: path to data
@@ -21,6 +21,7 @@ class MixtureModel:
         self.k = k
         self.df = discount_factor
         self.alpha = alpha
+        self.beta_weight = beta_weight
         self.path = path
         self.verbose = verbose
         self.save_path = save_path
@@ -35,7 +36,7 @@ class MixtureModel:
         for i in range(1, self.k+1):
             # Initialise the MDP
             print('Creating MDP with k = ', str(i),' and running Policy iteration with max iterations = ', str(max_iteration))
-            mm = MDP(path=self.path, alpha=self.alpha, k=i,
+            mm = MDP(path=self.path, alpha=self.alpha, beta_weight=self.beta_weight, k=i,
                      discount_factor=self.df, verbose=self.verbose, save_path=self.save_path)
             mm.initialise_mdp()
             # Run the policy iteration and save the model

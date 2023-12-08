@@ -126,6 +126,6 @@ k_value = 4
 # graph_decay_score('td',  filename ='td_mdp-model_k=', scale=k_value, rand=False)
 # graph_iteration_vs_reward('td', filename ='td_mdp-model_k=', label ="TD Learning ", k=k_value)
 
-graph_recommendation_score('sarsa', filename ='sarsa_mdp-model_k=', label ="Tabular SARSA ", scale=k_value)
-graph_decay_score('sarsa',  filename ='sarsa_mdp-model_k=', scale=k_value, rand=False)
-graph_iteration_vs_reward('sarsa', filename ='sarsa_mdp-model_k=', label ="Tabular SARSA ", k=k_value)
+graph_recommendation_score('value-iteration', filename ='mdp-model_k=', label ="value-iteration", scale=k_value)
+graph_decay_score('value-iteration',  filename ='mdp-model_k=', scale=k_value, rand=False)
+graph_iteration_vs_reward('value-iteration', filename ='mdp-model_k=', label ="value-iteration", k=k_value)

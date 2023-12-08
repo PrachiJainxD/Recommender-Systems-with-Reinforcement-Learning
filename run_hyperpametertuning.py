@@ -10,11 +10,14 @@ import os, shutil
 PATH='dataset'
 VALUE_ITERATION_MODEL_PATH='saved_models/value-iteration'
 RANDOMIZED_MODEL_PATH='saved_models/randomized-algo'
+SARSA_MODEL_PATH='saved_models/sarsa'
+TD_MODEL_PATH = 'saved_models/td'
+QLEARNING_MODEL_PATH = 'saved_models/Q'
 
 ######### Perform Hyper-Parameter Tuning #################
 hyper_parameters_grid_search = {
     'alpha' : [0.01, 0.99],
-    'k' : [4, 6], 
+    'k' : [4], 
     'discountrate' : [0.01, 0.99],
     'beta_weight' : [0.01, 0.99]
 }
@@ -57,10 +60,23 @@ for alpha in hyper_parameters_grid_search['alpha']:
             k=max(hyper_parameters_grid_search['k'])
             print(f'Hyperparameters Tuning - α={alpha}, β={beta_weight}, γ={discountrate},k={k}')
             saved_file_suffix = f'_α={alpha},β={beta_weight},γ={discountrate}'
-            mixture_model = MixtureModel(path='dataset', k=k, alpha=alpha, beta_weight=beta_weight,verbose=True, save_path=VALUE_ITERATION_MODEL_PATH+saved_file_suffix)
-            mixture_model.generate_model(max_iteration=10000)
-            graph_iteration_vs_reward('value_iteration_'+saved_file_suffix,VALUE_ITERATION_MODEL_PATH+saved_file_suffix, k=k, m=10)
+            # mixture_model = MixtureModel(path='dataset', k=k, alpha=alpha, beta_weight=beta_weight,verbose=True, save_path=VALUE_ITERATION_MODEL_PATH+saved_file_suffix)
+            # mixture_model.generate_model(max_iteration=10000)
+            # graph_iteration_vs_reward('value_iteration_'+saved_file_suffix,VALUE_ITERATION_MODEL_PATH+saved_file_suffix, k=k, m=10)
             
+            # for i in range(k):
+            #     mm = MDP(PATH, k=i+1, save_path=TD_MODEL_PATH+saved_file_suffix)
+            #     mm.initialise_mdp()
+            #     mm.td_learning_for_optimal_policies(N=100)
+            # graph_iteration_vs_reward('td_'+saved_file_suffix,TD_MODEL_PATH+saved_file_suffix, k=k, m=10)
+            
+            for i in range(k):
+                mm = MDP(PATH, k=i+1, save_path=QLEARNING_MODEL_PATH+saved_file_suffix)
+                mm.initialise_mdp()
+                mm.q_learning_for_optimal_policies(N=100)
+            graph_iteration_vs_reward('q_'+saved_file_suffix,QLEARNING_MODEL_PATH+saved_file_suffix, k=k, m=10)
+
+
             # #Hyper-Paramter Tuning for Rest of Approaches
             # for k in hyper_parameters_grid_search['k']:
             #     print(f'Hyperparameters Tuning - α={alpha}, β={beta_weight}, γ={discountrate},k={k}')

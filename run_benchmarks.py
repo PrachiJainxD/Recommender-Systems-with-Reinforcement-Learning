@@ -105,7 +105,6 @@ def graph_iteration_vs_reward(model_load_path, filename, label, k=4, m=10, with_
         rs.load(filename + str(idx+1) + '.pkl')
         y = rs.iteration_vs_reward
         x = [i+1 for i in range(len(y))]
-        
         row_idx = idx // cols
         col_idx = idx % cols
         #print(idx, row_idx, col_idx)
@@ -123,6 +122,10 @@ def graph_iteration_vs_reward(model_load_path, filename, label, k=4, m=10, with_
 
 
 k_value = 4
-graph_recommendation_score('td', filename ='td_mdp-model_k=', label ="TD Learning ", scale=k_value)
-graph_decay_score('td',  filename ='td_mdp-model_k=', scale=k_value, rand=False)
-graph_iteration_vs_reward('td', filename ='td_mdp-model_k=', label ="TD Learning ", k=k_value)
+# graph_recommendation_score('td', filename ='td_mdp-model_k=', label ="TD Learning ", scale=k_value)
+# graph_decay_score('td',  filename ='td_mdp-model_k=', scale=k_value, rand=False)
+# graph_iteration_vs_reward('td', filename ='td_mdp-model_k=', label ="TD Learning ", k=k_value)
+
+graph_recommendation_score('sarsa', filename ='sarsa_mdp-model_k=', label ="Tabular SARSA ", scale=k_value)
+graph_decay_score('sarsa',  filename ='sarsa_mdp-model_k=', scale=k_value, rand=False)
+graph_iteration_vs_reward('sarsa', filename ='sarsa_mdp-model_k=', label ="Tabular SARSA ", k=k_value)

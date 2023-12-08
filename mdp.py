@@ -229,63 +229,63 @@ class MDP:
             new_reward += action_values[self.policy[state]]
         return new_reward / len(self.S)
 
-    def sarsa_algorithm_for_optimal_policies(self, N=1000, alpha=1.0, gamma=0.9, epsilon=0.5, stability_threshold=0.05, to_save=True):
+    def sarsa_for_optimal_policies(self, N=100, alpha=1.0, gamma=0.9, epsilon=0.5, max_steps_per_episode=10, to_save=True):
         best_policy = None
         best_policy_performance = float('-inf')
-        value_prev = self.V.copy()  # Copy of the initial state values
 
-        # Initialize Q-values
+        # Initialize Q-values (action values)
         Q = {state: {action: 0 for action in self.A} for state in self.S}
 
         for i in range(N):
             print('Episode - ', i + 1)
 
-            # Initialize state
+            # Initialize state and action
             state = random.choice(list(self.S))
-
-            # Choose action from state using policy derived from Q (ε-greedy)
             action = self.choose_action(state, Q, epsilon)
-            diff = []
-            while True:
+
+            for step in range(max_steps_per_episode):
                 # Take action and observe reward and next state
                 next_state, reward = self.step(state, action)
 
                 # Choose next action from next state using policy derived from Q (ε-greedy)
                 next_action = self.choose_action(next_state, Q, epsilon)
-                diff.append(alpha * (reward + gamma * Q[next_state][next_action] - Q[state][action]))
+
+                # Check if the next state is in the Q-table, add if not
+                if next_state not in Q:
+                    Q[next_state] = {a: 0 for a in self.A}
+
                 # SARSA Update
                 Q[state][action] += alpha * (reward + gamma * Q[next_state][next_action] - Q[state][action])
 
                 state, action = next_state, next_action
 
-                # Derive policy from Q-values
-                for s in self.S:
-                    self.policy[s] = max(Q[s], key=Q[s].get)
+            # Derive policy from Q-values
+            for s in self.S:
+                self.policy[s] = max(Q[s], key=Q[s].get)
 
-                # Evaluate policy performance
-                self.V = self.policy_eval()
-                performance = sum(self.V.values())
-                self.iteration_vs_reward.append(performance)
+            # Evaluate policy performance
+            self.V = self.policy_eval()
+            performance = sum(self.V.values())
+            self.iteration_vs_reward.append(performance)
 
-                if performance > best_policy_performance:
-                    best_policy_performance = performance
-                    best_policy = self.policy.copy()
+            if performance > best_policy_performance:
+                best_policy_performance = performance
+                best_policy = self.policy.copy()
 
-                # Check if the value function has stabilized
-                if self.is_value_stable(value_prev, stability_threshold):
-                    print('Value function stabilized at episode - ', i + 1)
-                    break
+        print('Best Policy Performance - ', best_policy_performance)
+        self.policy = best_policy
 
-                # Update the previous value function for the next iteration
-                value_prev = self.V.copy()
-            print(np.mean(diff))
-            print('Best Policy Performance - ', best_policy_performance)
-            self.policy = best_policy
-
-            if to_save:
-                self.save("sarsa_mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
+        if to_save:
+            self.save("sarsa_mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
 
     def choose_action(self, state, Q, epsilon):
+        """
+        Choose an action based on an ε-greedy policy derived from Q-values.
+        :param state: The current state
+        :param Q: The dictionary of Q-values
+        :param epsilon: The probability of choosing a random action (exploration)
+        :return: The chosen action
+        """
         # Check if the state is in the Q-table, add if not
         if state not in Q:
             Q[state] = {action: 0 for action in self.A}
@@ -294,21 +294,8 @@ class MDP:
             # Exploration: choose a random action
             return random.choice(self.A)
         else:
-            # Exploitation: choose the best action based on state values
-            # Calculate the value of each action by considering the state value of the resulting state
+            # Exploitation: choose the best action based on Q-values
             return max(Q[state], key=Q[state].get)
-
-    def is_value_stable(self, value_prev, threshold):
-        """
-        Check if the value function has stabilized.
-        :param value_prev: the previous value function
-        :param threshold: the threshold for considering a change as significant
-        :return: Boolean indicating if the value function is stable
-        """
-        for state in value_prev:
-            if abs(value_prev[state] - self.V[state]) > threshold:
-                return False
-        return True
 
     def q_learning_for_optimal_policies(self, N=100, alpha=1.0, gamma=0.9, epsilon=0.5, max_steps_per_episode=10, to_save=True):
         best_policy = None
@@ -376,7 +363,7 @@ class MDP:
             return max(Q[state], key=Q[state].get)
 
 
-    def td_learning_for_optimal_policies(self, N=100, alpha=0.7, gamma=0.7, epsilon=0.5, max_steps_per_episode=10, to_save=True):
+    def td_learning_for_optimal_policies(self, N=100, alpha=1.0, gamma=0.9, epsilon=0.5, max_steps_per_episode=10, to_save=True):
         best_policy = None
         best_policy_performance = float('-inf')
 

@@ -25,7 +25,6 @@ class MDP:
         :param verbose: flag to show steps
         :param save_path: the path to which models should be saved and loaded from
         """
-
         # Initialize the MDPInitializer
         self.mdp_i = MDPInitializer(path, k, alpha, beta_weight)
         self.df = discount_factor
@@ -55,7 +54,6 @@ class MDP:
         The method to initialise the MDP.
         :return: None
         """
-        print(f'Initialized MDP with Hyper-Parameters α={self.mdp_i.alpha}, β={self.mdp_i.beta_weight}, γ={self.df},k={self.mdp_i.k}')
         # Initialising the actions
         self.print_progress("Getting set of actions.")
         self.A = self.mdp_i.actions
@@ -94,6 +92,39 @@ class MDP:
                 action_values[action] += P_and_R[0] * (P_and_R[1] + (self.df * self.V[next_state]))
 
         return action_values
+
+    def step(self, state, action):
+        """
+        Take an action in the current state and return the next state and reward.
+        :param state: The current state
+        :param action: The action to be taken
+        :return: A tuple of the next state and the reward for taking the action
+        """
+
+        # Check if the state is in the transition table, handle if not
+        if state not in self.T:
+            # Handle the missing state
+            # For example, you could return the same state with zero reward
+            # or initialize the missing state in the transition table
+            return state, 0
+
+        # Check if the action is valid for the current state
+        if action not in self.T[state]:
+            raise ValueError(f"Action '{action}' is not valid for state {state}")
+
+        # Get the possible transitions for the given state and action
+        possible_transitions = self.T[state][action]
+
+        # Select the next state based on the transition probabilities
+        # We will use a random choice weighted by the probabilities
+        next_states, probabilities_rewards = zip(*possible_transitions.items())
+        probabilities = [pr[0] for pr in probabilities_rewards]
+        next_state = random.choices(next_states, weights=probabilities, k=1)[0]
+
+        # Get the reward for the transition to the next state
+        reward = possible_transitions[next_state][1]
+        return next_state, reward
+
 
     def update_policy(self):
         """
@@ -175,9 +206,21 @@ class MDP:
             policy_prev = self.policy.copy()
         
         print('Reward vs Iteration = ', self.iteration_vs_reward)
-        # Save the model
+        # Save the model``
         if to_save:
             self.save("mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
+
+    def is_value_stable(self, value_prev, threshold=0.01):
+        """
+        Helper function to check if the value function has stabilized.
+        :param value_prev: the previous value function to compare with
+        :param threshold: the threshold for considering a change as significant
+        :return: a boolean indicating if the value function is stable or not
+        """
+        for state in value_prev:
+            if abs(value_prev[state] - self.V[state]) > threshold:
+                return False
+        return True
 
     def calc_reward(self):
         new_reward = 0
@@ -186,6 +229,230 @@ class MDP:
             new_reward += action_values[self.policy[state]]
         return new_reward / len(self.S)
 
+    def sarsa_algorithm_for_optimal_policies(self, N=1000, alpha=1.0, gamma=0.9, epsilon=0.5, stability_threshold=0.05, to_save=True):
+        best_policy = None
+        best_policy_performance = float('-inf')
+        value_prev = self.V.copy()  # Copy of the initial state values
+
+        # Initialize Q-values
+        Q = {state: {action: 0 for action in self.A} for state in self.S}
+
+        for i in range(N):
+            print('Episode - ', i + 1)
+
+            # Initialize state
+            state = random.choice(list(self.S))
+
+            # Choose action from state using policy derived from Q (ε-greedy)
+            action = self.choose_action(state, Q, epsilon)
+            diff = []
+            while True:
+                # Take action and observe reward and next state
+                next_state, reward = self.step(state, action)
+
+                # Choose next action from next state using policy derived from Q (ε-greedy)
+                next_action = self.choose_action(next_state, Q, epsilon)
+                diff.append(alpha * (reward + gamma * Q[next_state][next_action] - Q[state][action]))
+                # SARSA Update
+                Q[state][action] += alpha * (reward + gamma * Q[next_state][next_action] - Q[state][action])
+
+                state, action = next_state, next_action
+
+                # Derive policy from Q-values
+                for s in self.S:
+                    self.policy[s] = max(Q[s], key=Q[s].get)
+
+                # Evaluate policy performance
+                self.V = self.policy_eval()
+                performance = sum(self.V.values())
+                self.iteration_vs_reward.append(performance)
+
+                if performance > best_policy_performance:
+                    best_policy_performance = performance
+                    best_policy = self.policy.copy()
+
+                # Check if the value function has stabilized
+                if self.is_value_stable(value_prev, stability_threshold):
+                    print('Value function stabilized at episode - ', i + 1)
+                    break
+
+                # Update the previous value function for the next iteration
+                value_prev = self.V.copy()
+            print(np.mean(diff))
+            print('Best Policy Performance - ', best_policy_performance)
+            self.policy = best_policy
+
+            if to_save:
+                self.save("sarsa_mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
+
+    def choose_action(self, state, Q, epsilon):
+        # Check if the state is in the Q-table, add if not
+        if state not in Q:
+            Q[state] = {action: 0 for action in self.A}
+
+        if random.uniform(0, 1) < epsilon:
+            # Exploration: choose a random action
+            return random.choice(self.A)
+        else:
+            # Exploitation: choose the best action based on state values
+            # Calculate the value of each action by considering the state value of the resulting state
+            return max(Q[state], key=Q[state].get)
+
+    def is_value_stable(self, value_prev, threshold):
+        """
+        Check if the value function has stabilized.
+        :param value_prev: the previous value function
+        :param threshold: the threshold for considering a change as significant
+        :return: Boolean indicating if the value function is stable
+        """
+        for state in value_prev:
+            if abs(value_prev[state] - self.V[state]) > threshold:
+                return False
+        return True
+
+    def q_learning_for_optimal_policies(self, N=100, alpha=1.0, gamma=0.9, epsilon=0.5, max_steps_per_episode=10, to_save=True):
+        best_policy = None
+        best_policy_performance = float('-inf')
+
+        # Initialize Q-values (action values)
+        Q = {state: {action: 0 for action in self.A} for state in self.S}
+
+        for i in range(N):
+            print('Episode - ', i + 1)
+
+            # Initialize state
+            state = random.choice(list(self.S))
+
+            for step in range(max_steps_per_episode):
+                # Choose action from state using policy derived from Q (ε-greedy)
+                action = self.choose_Q_action(state, Q, epsilon)
+
+                # Take action and observe reward and next state
+                next_state, reward = self.step(state, action)
+
+                # Check if the next state is in the Q-table, add if not
+                if next_state not in Q:
+                    Q[next_state] = {action: 0 for action in self.A}
+
+                # Q-learning Update
+                max_next_q = max(Q[next_state].values())
+                Q[state][action] += alpha * (reward + gamma * max_next_q - Q[state][action])
+
+                state = next_state
+
+            # Derive policy from Q-values
+            for s in self.S:
+                self.policy[s] = max(Q[s], key=Q[s].get)
+
+            # Evaluate policy performance
+            self.V = self.policy_eval()
+            performance = sum(self.V.values())
+            self.iteration_vs_reward.append(performance)
+
+            if performance > best_policy_performance:
+                best_policy_performance = performance
+                best_policy = self.policy.copy()
+
+        print('Best Policy Performance - ', best_policy_performance)
+        self.policy = best_policy
+
+        if to_save:
+            self.save("q_learning_mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
+
+
+    def choose_Q_action(self, state, Q, epsilon):
+        """
+        Choose an action based on an ε-greedy policy derived from Q-values.
+        :param state: The current state
+        :param Q: The dictionary of Q-values
+        :param epsilon: The probability of choosing a random action (exploration)
+        :return: The chosen action
+        """
+        if random.uniform(0, 1) < epsilon:
+            # Exploration: choose a random action
+            return random.choice(self.A)
+        else:
+            # Exploitation: choose the best action based on Q-values
+            return max(Q[state], key=Q[state].get)
+
+
+    def td_learning_for_optimal_policies(self, N=100, alpha=0.7, gamma=0.7, epsilon=0.5, max_steps_per_episode=10, to_save=True):
+        best_policy = None
+        best_policy_performance = float('-inf')
+
+        # Initialize V-values (state values)
+        V = {state: 0 for state in self.S}
+
+        for i in range(N):
+            print('Episode - ', i + 1)
+
+            # Initialize state
+            state = random.choice(list(self.S))
+
+            for step in range(max_steps_per_episode):
+                # Choose action from state using policy derived from V (ε-greedy)
+                action = self.choose_TD_action(state, V, epsilon)
+
+                # Take action and observe reward and next state
+                next_state, reward = self.step(state, action)
+
+                # Check if the next state is in the value function, add if not
+                if next_state not in V:
+                    V[next_state] = 0  # Initialize with a default value, e.g., 0
+
+                # TD Update
+                V[state] += alpha * (reward + gamma * V[next_state] - V[state])
+
+                state = next_state
+
+            # Derive policy from V-values
+            for s in self.S:
+                self.policy[s] = self.choose_TD_action(s, V, 0)  # 0 epsilon for greedy policy
+
+            # Evaluate policy performance
+            self.V = self.policy_eval()
+            performance = sum(self.V.values())
+            self.iteration_vs_reward.append(performance)
+
+            if performance > best_policy_performance:
+                best_policy_performance = performance
+                best_policy = self.policy.copy()
+
+        print('Best Policy Performance - ', best_policy_performance)
+        self.policy = best_policy
+
+        if to_save:
+            self.save("td_mdp-model_k=" + str(self.mdp_i.k) + ".pkl")
+
+    def choose_TD_action(self, state, V, epsilon):
+        """
+        Choose an action based on an ε-greedy policy derived from state values.
+        :param state: The current state
+        :param V: The dictionary of state values
+        :param epsilon: The probability of choosing a random action (exploration)
+        :return: The chosen action
+        """
+        if random.uniform(0, 1) < epsilon:
+            # Exploration: choose a random action
+            return random.choice(self.A)
+        else:
+            # Exploitation: choose the best action based on state values
+            action_values = {}
+            for action in self.A:
+                # Assume step method returns the next state and reward for a given state and action
+                next_state, _ = self.step(state, action)
+
+                # Check if the next state is in the value function, add if not
+                if next_state not in V:
+                    V[next_state] = 0  # Initialize with a default value, e.g., 0
+
+                action_values[action] = V[next_state]
+
+            # Choose the action with the highest value
+            return max(action_values, key=action_values.get)
+
+
+    
     def randomized_algorithm_for_optimal_policies(self, N=5, to_save=True):
         best_polcicy = None
         best_policy_performance = 0

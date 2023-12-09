@@ -70,11 +70,18 @@ for alpha in hyper_parameters_grid_search['alpha']:
             #     mm.td_learning_for_optimal_policies(N=100)
             # graph_iteration_vs_reward('td_'+saved_file_suffix,TD_MODEL_PATH+saved_file_suffix, k=k, m=10)
             
+            # for i in range(k):
+            #     mm = MDP(PATH, k=i+1, save_path=QLEARNING_MODEL_PATH+saved_file_suffix)
+            #     mm.initialise_mdp()
+            #     mm.q_learning_for_optimal_policies(N=100)
+            # graph_iteration_vs_reward('q_'+saved_file_suffix,QLEARNING_MODEL_PATH+saved_file_suffix, k=k, m=10)
+
             for i in range(k):
-                mm = MDP(PATH, k=i+1, save_path=QLEARNING_MODEL_PATH+saved_file_suffix)
+                mm = MDP(PATH, k=i+1, save_path=SARSA_MODEL_PATH+saved_file_suffix)
                 mm.initialise_mdp()
-                mm.q_learning_for_optimal_policies(N=100)
-            graph_iteration_vs_reward('q_'+saved_file_suffix,QLEARNING_MODEL_PATH+saved_file_suffix, k=k, m=10)
+                mm.sarsa_for_optimal_policies(N=100)
+            graph_iteration_vs_reward('sarsa_'+saved_file_suffix,SARSA_MODEL_PATH+saved_file_suffix, k=k, m=10)
+
 
 
             # #Hyper-Paramter Tuning for Rest of Approaches

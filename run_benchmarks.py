@@ -31,7 +31,7 @@ def graph_recommendation_score(model_load_path, filename, label, scale=4, m=10, 
                 y_recommendation_rand.append(rs.evaluate_recommendation_score(m=i))
             y_recommendation.append(rs.evaluate_recommendation_score(m=i))
 
-        plt.plot(x, y_recommendation, color=color[j-1], label=label + str(j))
+        plt.plot(x, y_recommendation, color=color[j-1], label=label +' k='+ str(j))
         #plt.scatter(x, y_recommendation, color=color[j-1])
 
         if with_comparison:
@@ -54,7 +54,7 @@ def graph_recommendation_score(model_load_path, filename, label, scale=4, m=10, 
     plt.xlabel('Top i Recommendations', fontsize=12)
     plt.ylabel('Recommendation Score', fontsize=12)
     plt.legend()
-    plt.savefig('benchmarks/recommendation_score.png')
+    plt.savefig('benchmarks/'+model_load_path+'_recommendation_score.png')
     plt.show()
 
 def graph_decay_score(model_load_path, filename, scale=3, rand=False):
@@ -91,7 +91,7 @@ def graph_decay_score(model_load_path, filename, scale=3, rand=False):
     fig.suptitle('Avg Exponential Decay Score vs Last K Purchases', fontsize = 12)
     plt.xlabel('K', fontsize = 12)
     plt.ylabel('Exponential Decay Score', fontsize = 12)
-    plt.savefig('benchmarks/exp_decay_score.png')
+    plt.savefig('benchmarks/'+model_load_path+'_exp_decay_score.png')
     plt.show()
 
 def graph_iteration_vs_reward(model_load_path, filename, label, k=4, m=10, with_comparison=False):
@@ -109,12 +109,12 @@ def graph_iteration_vs_reward(model_load_path, filename, label, k=4, m=10, with_
         col_idx = idx % cols
         #print(idx, row_idx, col_idx)
 
-        axs[row_idx, col_idx].plot(x, y, color=color[idx], label=label+ str(idx+1))
+        axs[row_idx, col_idx].plot(x, y, color=color[idx])
         axs[row_idx, col_idx].fill_between(x, y, color=color[idx], alpha=0.3)
         axs[row_idx, col_idx].set_title(f'Iterations vs Rewards (k={idx+1})')
         axs[row_idx, col_idx].set_xlabel('# Iterations')
         axs[row_idx, col_idx].set_ylabel('Rewards')
-        axs[row_idx, col_idx].legend()
+        #axs[row_idx, col_idx].legend()
 
     plt.tight_layout()
     plt.savefig('benchmarks/'+model_load_path+'_iteration_vs_reward.png')
@@ -122,10 +122,18 @@ def graph_iteration_vs_reward(model_load_path, filename, label, k=4, m=10, with_
 
 
 k_value = 4
-# graph_recommendation_score('td', filename ='td_mdp-model_k=', label ="TD Learning ", scale=k_value)
-# graph_decay_score('td',  filename ='td_mdp-model_k=', scale=k_value, rand=False)
-# graph_iteration_vs_reward('td', filename ='td_mdp-model_k=', label ="TD Learning ", k=k_value)
+graph_recommendation_score('td', filename ='td_mdp-model_k=', label ="TD Learning ", scale=k_value)
+graph_decay_score('td',  filename ='td_mdp-model_k=', scale=k_value, rand=False)
+graph_iteration_vs_reward('td', filename ='td_mdp-model_k=', label ="TD Learning ", k=k_value)
 
 graph_recommendation_score('value-iteration', filename ='mdp-model_k=', label ="value-iteration", scale=k_value)
 graph_decay_score('value-iteration',  filename ='mdp-model_k=', scale=k_value, rand=False)
 graph_iteration_vs_reward('value-iteration', filename ='mdp-model_k=', label ="value-iteration", k=k_value)
+
+graph_recommendation_score('randomized-algo', filename ='mdp-model_k=', label ="randomized-algo", scale=k_value)
+graph_decay_score('randomized-algo',  filename ='mdp-model_k=', scale=k_value, rand=False)
+graph_iteration_vs_reward('randomized-algo', filename ='mdp-model_k=', label ="randomized-algo", k=k_value)
+
+graph_recommendation_score('Q', filename ='q_learning_mdp-model_k=', label ="Q Learning ", scale=k_value)
+graph_decay_score('Q',  filename ='q_learning_mdp-model_k=', scale=k_value, rand=False)
+graph_iteration_vs_reward('Q', filename ='q_learning_mdp-model_k=', label ="Q Learning ", k=k_value)
